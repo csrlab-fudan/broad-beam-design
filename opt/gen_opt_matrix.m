@@ -22,12 +22,12 @@ plotfcn = 'optimplotfval';
 % "HessianMultiplyFcn",@HessMultFcn
 % plotfcn = [];
 options = optimoptions('fmincon','Display', display, 'SpecifyObjectiveGradient',givenGrad,...
-    'SpecifyConstraintGradient',givenGrad, 'SubproblemAlgorithm','cg', 'UseParallel', true,...
+    'SpecifyConstraintGradient',givenGrad, 'SubproblemAlgorithm','cg',...
     'PlotFcn',plotfcn, 'CheckGradients',checkGrad, "MaxIterations",maxIter,...
     "MaxFunctionEvaluations", maxFunc, "ScaleProblem", scale,  ...
     "HessianMultiplyFcn",@HessMultFcn);
 save("par.mat", "M", "N", "alpha", "beta", "factor");
-[x,fval,exitflag,output,lambda,grad,hessian]  = fmincon(fun,x0,A,b,Aeq,beq,lb,ub,nonlcon,options);
+[x,fval,exitflag,output,lambda,grad,hessian] = fmincon(fun,x0,A,b,Aeq,beq,lb,ub,nonlcon,options);
 h = get(gca, 'Children');
 loss = get(h, 'Ydata');
 theta = reshape(x(1:end/2), M, N);
@@ -39,17 +39,10 @@ W2 = matrix_shift(W2, alpha, beta, u, v);
 end
 
 function [x0, initStop] = initialize(M, N, alpha, beta, factor, init)
-switch M
-    case 96
-        P = 2/alpha;
-    case 120
-        P = 2/alpha;
-    otherwise
-        P = 1/alpha;
-end
-b = 1/2;
-x1 = gen_general_partial_sequence(M, P, alpha, b);
-x2 = gen_general_partial_sequence(N, P, beta, b);
+P1 = find_p(M, alpha);
+P2 = find_p(N, beta);
+x1 = gen_gsc_sequence(M, alpha, alpha, P1);
+x2 = gen_gsc_sequence(N, beta, alpha, P2);
 X0 = x1*x2.';
 
 M1 = M*factor; N1 = N*factor;
@@ -64,6 +57,23 @@ if isequal(init, 'random')
 else
     x0 = mod(angle(X0(:)), 2*pi);
     x0 = [x0; x0];
+end
+end
+
+function P = find_p(M, alpha)
+switch M
+    case 24
+        P = 12;
+    case 36
+        P = 12;
+    case 48
+        P = 16;
+    case 60
+        P = 15;
+    case 64
+        P = 16;
+    otherwise
+        P = 1/alpha;
 end
 end
 

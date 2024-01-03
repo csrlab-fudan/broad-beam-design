@@ -1,4 +1,5 @@
 function w= HessMultFcn(x,lambda, v)
+v = full(v);
 load par.mat M N alpha beta factor;
 theta = reshape(x(1:end/2), M, N);
 phi = reshape(x(end/2+1:end), M, N);
